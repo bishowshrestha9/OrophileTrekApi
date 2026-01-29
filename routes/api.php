@@ -10,6 +10,6 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanc
 Route::get('/me', [AuthController::class, 'me'])->middleware('auth:sanctum');
 
 
-
+      
     Route::apiResource('treks', TrekController::class);
 
