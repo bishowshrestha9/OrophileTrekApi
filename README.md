@@ -220,16 +220,179 @@ Same as specific fields in "Create a New Trek".
 }
 ```
 
-#### Delete a Trek
-Remove a trek from the database.
+---
 
-*   **Endpoint**: `DELETE /api/treks/{id}`
-*   **Access**: Protected
+### 3. Blogs
+
+Manage blog posts with images and rich content.
+
+#### Get All Blogs
+Retrieve a paginated list of all blogs.
+
+*   **Endpoint**: `GET /api/blogs`
+*   **Access**: Public
+
+**Query Parameters:**
+*   `per_page`: (Optional) Number of items per page. Default: `10`.
 
 **Response (200 OK):**
 ```json
 {
-  "success": true,
-  "message": "Trek deleted successfully"
+  "status": true,
+  "message": "Blogs fetched successfully",
+  "data": [
+    {
+      "id": 1,
+      "title": "My First Blog",
+      "subtitle": "A subtitle",
+      "description": "Blog description",
+      "excerpt": "Short excerpt",
+      "author": "John Doe",
+      "slug": "my-first-blog",
+      "is_active": true,
+      "image": "blogs/image.jpg",
+      "image_url": "http://localhost:8000/storage/blogs/image.jpg",
+      "content": [
+        {
+          "heading": "Introduction",
+          "paragraph": "This is the intro"
+        }
+      ],
+      "conclusion": "Final thoughts",
+      "created_at": "2024-01-01T00:00:00.000000Z",
+      "updated_at": "2024-01-01T00:00:00.000000Z"
+    }
+  ],
+  "pagination": {
+    "current_page": 1,
+    "last_page": 5,
+    "per_page": 10,
+    "total": 50
+  }
+}
+```
+
+#### Create a New Blog
+Store a new blog post with image upload.
+
+*   **Endpoint**: `POST /api/blogs`
+*   **Access**: Protected (Admin only)
+*   **Content-Type**: `multipart/form-data`
+
+**Request Body (Form Data):**
+
+| Field | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `title` | String | Yes | Blog title. |
+| `subtitle` | String | No | Blog subtitle. |
+| `description` | String | Yes | Full description. |
+| `excerpt` | String | No | Short excerpt (max 500 chars). |
+| `author` | String | No | Author name. |
+| `content` | String (JSON) | No | JSON array: `[{"heading":"...", "paragraph":"..."}]` |
+| `conclusion` | String | No | Conclusion text. |
+| `is_active` | Boolean | Yes | `true` or `false`. |
+| `slug` | String | Yes | URL-friendly slug (must be unique). |
+| `image` | File | Yes | Featured image (jpeg, jpg, png, gif, webp, max 5MB). |
+
+**Response (201 Created):**
+```json
+{
+  "status": true,
+  "message": "Blog created successfully"
+}
+```
+
+#### Get Single Blog
+Retrieve details of a specific blog by title slug.
+
+*   **Endpoint**: `GET /api/blogs/{title}`
+*   **Access**: Public
+
+**Path Parameter:**
+*   `title`: Blog title slug (e.g., `my-first-blog`)
+
+**Response (200 OK):**
+```json
+{
+  "status": true,
+  "message": "Blog fetched successfully",
+  "data": {
+    "id": 1,
+    "title": "My First Blog",
+    "subtitle": "A subtitle",
+    "description": "Blog description",
+    "excerpt": "Short excerpt",
+    "author": "John Doe",
+    "slug": "my-first-blog",
+    "is_active": true,
+    "image": "blogs/image.jpg",
+    "image_url": "http://localhost:8000/storage/blogs/image.jpg",
+    "content": [
+      {
+        "heading": "Introduction",
+        "paragraph": "This is the intro"
+      }
+    ],
+    "conclusion": "Final thoughts",
+    "created_at": "2024-01-01T00:00:00.000000Z",
+    "updated_at": "2024-01-01T00:00:00.000000Z"
+  }
+}
+```
+
+**Response (404 Not Found):**
+```json
+{
+  "status": false,
+  "message": "Blog not found"
+}
+```
+
+#### Update a Blog
+Update an existing blog post.
+
+*   **Endpoint**: `POST /api/blogs/{id}`
+*   **Access**: Protected (Admin only)
+*   **Content-Type**: `multipart/form-data`
+
+**Path Parameter:**
+*   `id`: Blog ID
+
+**Request Body:**
+Same fields as "Create a New Blog", but all fields are optional except those being updated.
+
+**Response (200 OK):**
+```json
+{
+  "status": true,
+  "message": "Blog updated successfully"
+}
+```
+
+#### Delete a Blog
+Remove a blog from the database.
+
+*   **Endpoint**: `DELETE /api/blogs/{id}`
+*   **Access**: Protected (Admin only)
+
+**Response (200 OK):**
+```json
+{
+  "status": true,
+  "message": "Blog deleted successfully"
+}
+```
+
+#### Get Total Blogs Count
+Retrieve the total number of blogs.
+
+*   **Endpoint**: `GET /api/blogs/total`
+*   **Access**: Protected (Admin only)
+
+**Response (200 OK):**
+```json
+{
+  "status": true,
+  "total_blogs": 42
 }
 ```
