@@ -11,6 +11,7 @@ return [
     // Paths that should be CORS-enabled
     'paths' => [
         'api/*',
+        'docs/*',
         'auth/*',
         'sanctum/csrf-cookie',
         'logout',
@@ -21,9 +22,11 @@ return [
     'allowed_methods' => ['*'],
 
     // ✅ MUST BE SPECIFIC when using credentials
-    'allowed_origins' => env('CORS_ALLOWED_ORIGINS') 
+    'allowed_origins' => env('CORS_ALLOWED_ORIGINS')
         ? array_map('trim', explode(',', env('CORS_ALLOWED_ORIGINS')))
         : [
+            'http://localhost:8000',
+            'http://127.0.0.1:8000',
             'http://localhost:3002',
             'http://127.0.0.1:3002',
             'http://localhost:3000',
