@@ -9,8 +9,8 @@ use OpenApi\Attributes as OA;
     description: "API documentation for Orophile Trek application"
 )]
 #[OA\Server(
-    url: "http://localhost:8000",
-    description: "Local Server"
+    url: "http://161.97.167.73:8000",
+    description: "Server"
 )]
 #[OA\SecurityScheme(
     securityScheme: "sanctum",

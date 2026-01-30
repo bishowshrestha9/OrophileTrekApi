@@ -8,6 +8,10 @@ return [
                 'title' => 'L5 Swagger UI',
             ],
 
+            'constants' => [
+                'APP_URL' => env('APP_URL'),
+            ],
+
             'routes' => [
                 /*
                  * Route for accessing api documentation interface
