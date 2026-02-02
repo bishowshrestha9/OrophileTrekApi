@@ -18,12 +18,13 @@ class Trek extends Model
         'type',
         'distance_km',
         'description',
-        'featured_image',
+        'gallery_images',
         'is_featured',
         'trek_days',
     ];
 
     protected $casts = [
         'trek_days' => 'array',
+        'gallery_images' => 'array',
     ];
 }

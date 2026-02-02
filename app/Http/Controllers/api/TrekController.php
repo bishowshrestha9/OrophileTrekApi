@@ -100,7 +100,7 @@ class TrekController extends Controller
                     new OA\Property(property: "type", type: "string", maxLength: 100),
                     new OA\Property(property: "distance_km", type: "number", format: "float", minimum: 0),
                     new OA\Property(property: "description", type: "string"),
-                    new OA\Property(property: "featured_image", type: "string", format: "binary"),
+                    new OA\Property(property: "gallery_images", type: "array", items: new OA\Items(type: "string", format: "binary")),
                     new OA\Property(property: "is_featured", type: "boolean"),
                     new OA\Property(property: "is_active", type: "boolean"),
                     new OA\Property(property: "trek_days", type: "array", items: new OA\Items(type: "string"))
@@ -123,14 +123,18 @@ class TrekController extends Controller
     {
         try {
             $data = $request->validated();
-            if ($request->hasFile('featured_image')) {
-                $image = $request->file('featured_image');
-                $imageName = uniqid('trek_') . '.' . $image->getClientOriginalExtension();
-                
-                // Store in storage/app/public/treks (automatically creates directory)
-                $path = $image->storeAs('treks', $imageName, 'public');
-                $data['featured_image'] = $path;
+            
+            // Handle gallery images upload
+            if ($request->hasFile('gallery_images')) {
+                $galleryPaths = [];
+                foreach ($request->file('gallery_images') as $image) {
+                    $imageName = uniqid('trek_gallery_') . '.' . $image->getClientOriginalExtension();
+                    $path = $image->storeAs('treks/gallery', $imageName, 'public');
+                    $galleryPaths[] = $path;
+                }
+                $data['gallery_images'] = $galleryPaths;
             }
+            
             $trek = Trek::create($data);
             $data = new TrekResource($trek);
             return response()->json([
@@ -209,7 +213,7 @@ class TrekController extends Controller
                     new OA\Property(property: "type", type: "string", maxLength: 100),
                     new OA\Property(property: "distance_km", type: "number", format: "float", minimum: 0),
                     new OA\Property(property: "description", type: "string"),
-                    new OA\Property(property: "featured_image", type: "string", format: "binary"),
+                    new OA\Property(property: "gallery_images", type: "array", items: new OA\Items(type: "string", format: "binary")),
                     new OA\Property(property: "is_featured", type: "boolean"),
                     new OA\Property(property: "is_active", type: "boolean"),
                     new OA\Property(property: "trek_days", type: "array", items: new OA\Items(type: "string"))
@@ -234,19 +238,27 @@ class TrekController extends Controller
         try {
             $trek = Trek::findOrFail($id);
             $data = $request->validated();
-            if ($request->hasFile('featured_image')) {
-                // Delete old image if exists
-                if ($trek->featured_image && Storage::disk('public')->exists($trek->featured_image)) {
-                    Storage::disk('public')->delete($trek->featured_image);
+            
+            // Handle gallery images upload
+            if ($request->hasFile('gallery_images')) {
+                // Delete old gallery images if exist
+                if ($trek->gallery_images) {
+                    foreach ($trek->gallery_images as $oldImage) {
+                        if (Storage::disk('public')->exists($oldImage)) {
+                            Storage::disk('public')->delete($oldImage);
+                        }
+                    }
                 }
                 
-                $image = $request->file('featured_image');
-                $imageName = uniqid('trek_') . '.' . $image->getClientOriginalExtension();
-                
-                // Store in storage/app/public/treks (automatically creates directory)
-                $path = $image->storeAs('treks', $imageName, 'public');
-                $data['featured_image'] = $path;
+                $galleryPaths = [];
+                foreach ($request->file('gallery_images') as $image) {
+                    $imageName = uniqid('trek_gallery_') . '.' . $image->getClientOriginalExtension();
+                    $path = $image->storeAs('treks/gallery', $imageName, 'public');
+                    $galleryPaths[] = $path;
+                }
+                $data['gallery_images'] = $galleryPaths;
             }
+            
             $trek->update($data);
             $data = new TrekResource($trek);
             return response()->json([
@@ -285,9 +297,14 @@ class TrekController extends Controller
     {
         try {
             $trek = Trek::findOrFail($id);
-            if ($trek->featured_image) {
-                Storage::disk('public')->delete($trek->featured_image);
+            
+            // Delete gallery images if exist
+            if ($trek->gallery_images) {
+                foreach ($trek->gallery_images as $image) {
+                    Storage::disk('public')->delete($image);
+                }
             }
+            
             $trek->delete();
             return response()->json([
                 'success' => true,

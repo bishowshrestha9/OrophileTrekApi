@@ -24,8 +24,10 @@ class TrekResource extends JsonResource
             'type' => $this->type,
             'distance_km' => $this->distance_km,
             'description' => $this->description,
-            'featured_image' => $this->featured_image,
-            'featured_image_url' => $this->featured_image ? url('storage/' . $this->featured_image) : null,
+            'gallery_images' => $this->gallery_images,
+            'gallery_images_urls' => $this->gallery_images ? array_map(function($image) {
+                return url('storage/' . $image);
+            }, $this->gallery_images) : [],
             'is_featured' => $this->is_featured,
             'is_active' => $this->is_active,
             'currency' => $this->currency,
