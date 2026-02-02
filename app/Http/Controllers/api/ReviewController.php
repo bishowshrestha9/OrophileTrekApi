@@ -117,6 +117,7 @@ class ReviewController extends Controller
                 'message' => 'Review created successfully',
             ], 201);
         } catch (\Exception $e) {
+            \Log::error('Review submit error: ' . $e->getMessage(), ['file' => $e->getFile(), 'line' => $e->getLine()]);
             return response()->json([
                 'status' => false,
                 'message' => 'Failed to create review',
@@ -215,6 +216,7 @@ class ReviewController extends Controller
                 ]
             ], 200);
         } catch (\Exception $e) {
+            \Log::error('Get reviews error: ' . $e->getMessage(), ['file' => $e->getFile(), 'line' => $e->getLine()]);
             return response()->json([
                 'status' => false,
                 'message' => 'Failed to fetch reviews',
@@ -310,6 +312,7 @@ class ReviewController extends Controller
                 ]
             ], 200);
         } catch (\Exception $e) {
+            \Log::error('Get publishable reviews error: ' . $e->getMessage(), ['file' => $e->getFile(), 'line' => $e->getLine()]);
             return response()->json([
                 'status' => false,
                 'message' => 'Failed to fetch publishable reviews',
@@ -348,18 +351,26 @@ class ReviewController extends Controller
     public function delete($id)
     {
         try {
-            $review = Reviews::where('id', $id)->delete();
-
-
+            $review = Reviews::find($id);
+            
+            if (!$review) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Review not found',
+                ], 404);
+            }
+            
+            $review->delete();
 
             return response()->json([
                 'status' => true,
-                'message' => 'Reviews deleted successfully',
+                'message' => 'Review deleted successfully',
             ], 200);
         } catch (\Exception $e) {
+            \Log::error('Delete review error: ' . $e->getMessage(), ['file' => $e->getFile(), 'line' => $e->getLine()]);
             return response()->json([
                 'status' => false,
-                'message' => 'Failed to delete reviews',
+                'message' => 'Failed to delete review',
             ], 500);
         }
     }
@@ -419,6 +430,7 @@ class ReviewController extends Controller
                 'message' => 'Review approved successfully',
             ], 200);
         } catch (\Exception $e) {
+            \Log::error('Approve review error: ' . $e->getMessage(), ['file' => $e->getFile(), 'line' => $e->getLine()]);
             return response()->json([
                 'status' => false,
                 'message' => 'Failed to approve review',
@@ -489,6 +501,7 @@ class ReviewController extends Controller
                 'data' => $data,
             ], 200);
         } catch (\Exception $e) {
+            \Log::error('Get four reviews error: ' . $e->getMessage(), ['file' => $e->getFile(), 'line' => $e->getLine()]);
             return response()->json([
                 'status' => false,
                 'message' => 'Failed to fetch reviews',
@@ -534,10 +547,10 @@ class ReviewController extends Controller
                 ]
             ]);
         } catch (\Exception $e) {
-            \Log::error($e->getMessage(), ['file' => $e->getFile(), 'line' => $e->getLine()]);
+            \Log::error('Get review stats error: ' . $e->getMessage(), ['file' => $e->getFile(), 'line' => $e->getLine()]);
             return response()->json([
                 'status' => false,
-                'message' => 'Failed to retrieve reviews count: '
+                'message' => 'Failed to retrieve review statistics'
             ], 500);
         }
     }

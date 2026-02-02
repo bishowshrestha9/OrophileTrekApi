@@ -74,30 +74,25 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+        try {
+            $request->validate([
+                'email' => 'required|email',
+                'password' => 'required',
+            ]);
 
-        $user = User::where('email', $request->email)->first();
+            $user = User::where('email', $request->email)->first();
 
-        if (!$user) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Invalid login details'
-            ], 401);
-        }
+            if (!$user) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Invalid login details'
+                ], 401);
+            }
 
-       
-       
+            $token = $user->createToken('auth_token')->plainTextToken;
 
-        
-
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        // Detect environment for cookie settings
-        // Check multiple sources: Origin header, Referer header, and request host
+            // Detect environment for cookie settings
+            // Check multiple sources: Origin header, Referer header, and request host
         $origin = $request->header('Origin') ?? $request->header('Referer') ?? '';
         $requestHost = $request->getHost();
         $requestScheme = $request->getScheme();
@@ -149,6 +144,19 @@ class AuthController extends Controller
             );
 
         return $response;
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Throwable $th) {
+            \Log::error('Login error: ' . $th->getMessage(), ['file' => $th->getFile(), 'line' => $th->getLine()]);
+            return response()->json([
+                'status' => false,
+                'message' => 'Login failed'
+            ], 500);
+        }
     }
 
     #[OA\Post(
@@ -180,12 +188,20 @@ class AuthController extends Controller
     )]
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        try {
+            $request->user()->currentAccessToken()->delete();
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Logged out'
-        ]);
+            return response()->json([
+                'status' => true,
+                'message' => 'Logged out'
+            ]);
+        } catch (\Throwable $th) {
+            \Log::error('Logout error: ' . $th->getMessage(), ['file' => $th->getFile(), 'line' => $th->getLine()]);
+            return response()->json([
+                'status' => false,
+                'message' => 'Logout failed'
+            ], 500);
+        }
     }
 
     #[OA\Get(
@@ -217,10 +233,17 @@ class AuthController extends Controller
     )]
     public function me(Request $request)
     {
-        return response()->json([
-            'status' => true,
-            'role' => $request->user()->role
-
-        ]);
+        try {
+            return response()->json([
+                'status' => true,
+                'role' => $request->user()->role
+            ]);
+        } catch (\Throwable $th) {
+            \Log::error('Get user error: ' . $th->getMessage(), ['file' => $th->getFile(), 'line' => $th->getLine()]);
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to retrieve user information'
+            ], 500);
+        }
     }
 }

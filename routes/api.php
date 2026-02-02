@@ -6,6 +6,7 @@ use App\Http\Middleware\RoleCheck;
 use App\Http\Controllers\api\TrekController;
 use App\Http\Controllers\api\BlogsController;
 use App\Http\Controllers\api\ReviewController;
+use App\Http\Controllers\api\ActivityController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
@@ -14,6 +15,8 @@ Route::get('/me', [AuthController::class, 'me'])->middleware('auth:sanctum');
 
 
 Route::apiResource('treks', TrekController::class);
+
+Route::apiResource('activities', ActivityController::class);
 
 Route::prefix('blogs')->middleware(['auth:sanctum', 'role'])->group(function () {
     Route::post('/', [BlogsController::class, 'store']);

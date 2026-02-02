@@ -43,30 +43,38 @@ class TrekController extends Controller
     )]
     public function index(Request $request)
     {
-        $query = Trek::latest();
+        try {
+            $query = Trek::latest();
 
-        if ($request->has('data_type')) {
-            $query->where('data_type', $request->data_type);
-        }
-        if ($request->has('is_active')) {
-            $query->where('is_active', $request->is_active);
-        }
+            if ($request->has('data_type')) {
+                $query->where('data_type', $request->data_type);
+            }
+            if ($request->has('is_active')) {
+                $query->where('is_active', $request->is_active);
+            }
 
-        $treks = $query->paginate(10);
-        $data = TrekResource::collection($treks);
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'treks' => $data,
-                'pagination' => [
-                    'total' => $treks->total(),
-                    'per_page' => $treks->perPage(),
-                    'current_page' => $treks->currentPage(),
-                    'last_page' => $treks->lastPage(),
-                ]
-            ],
-            'message' => 'Treks retrieved successfully'
-        ]);
+            $treks = $query->paginate(10);
+            $data = TrekResource::collection($treks);
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'treks' => $data,
+                    'pagination' => [
+                        'total' => $treks->total(),
+                        'per_page' => $treks->perPage(),
+                        'current_page' => $treks->currentPage(),
+                        'last_page' => $treks->lastPage(),
+                    ]
+                ],
+                'message' => 'Treks retrieved successfully'
+            ]);
+        } catch (\Throwable $th) {
+            \Log::error('Trek index error: ' . $th->getMessage(), ['file' => $th->getFile(), 'line' => $th->getLine()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve treks'
+            ], 500);
+        }
     }
 
     #[OA\Post(
@@ -129,11 +137,12 @@ class TrekController extends Controller
                 'success' => true,
                 'data' => $data,
                 'message' => 'Trek created successfully'
-            ]);
+            ], 201);
         } catch (\Throwable $th) {
+            \Log::error('Trek store error: ' . $th->getMessage(), ['file' => $th->getFile(), 'line' => $th->getLine()]);
             return response()->json([
                 'success' => false,
-                'message' => $th->getMessage()
+                'message' => 'Failed to create trek'
             ], 500);
         }
     }
@@ -153,13 +162,26 @@ class TrekController extends Controller
     )]
     public function show($id)
     {
-        $trek = Trek::findOrFail($id);
-        $data = new TrekResource($trek);
-        return response()->json([
-            'success' => true,
-            'data' => $data,
-            'message' => 'Trek retrieved successfully'
-        ]);
+        try {
+            $trek = Trek::findOrFail($id);
+            $data = new TrekResource($trek);
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+                'message' => 'Trek retrieved successfully'
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Trek not found'
+            ], 404);
+        } catch (\Throwable $th) {
+            \Log::error('Trek show error: ' . $th->getMessage(), ['file' => $th->getFile(), 'line' => $th->getLine()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve trek'
+            ], 500);
+        }
     }
 
     #[OA\Put(
@@ -209,28 +231,41 @@ class TrekController extends Controller
     #[OA\Response(response: 404, description: "Not found")]
     public function update(TrekRequest $request, $id)
     {
-        $trek = Trek::findOrFail($id);
-        $data = $request->validated();
-        if ($request->hasFile('featured_image')) {
-            // Delete old image if exists
-            if ($trek->featured_image && Storage::disk('public')->exists($trek->featured_image)) {
-                Storage::disk('public')->delete($trek->featured_image);
+        try {
+            $trek = Trek::findOrFail($id);
+            $data = $request->validated();
+            if ($request->hasFile('featured_image')) {
+                // Delete old image if exists
+                if ($trek->featured_image && Storage::disk('public')->exists($trek->featured_image)) {
+                    Storage::disk('public')->delete($trek->featured_image);
+                }
+                
+                $image = $request->file('featured_image');
+                $imageName = uniqid('trek_') . '.' . $image->getClientOriginalExtension();
+                
+                // Store in storage/app/public/treks (automatically creates directory)
+                $path = $image->storeAs('treks', $imageName, 'public');
+                $data['featured_image'] = $path;
             }
-            
-            $image = $request->file('featured_image');
-            $imageName = uniqid('trek_') . '.' . $image->getClientOriginalExtension();
-            
-            // Store in storage/app/public/treks (automatically creates directory)
-            $path = $image->storeAs('treks', $imageName, 'public');
-            $data['featured_image'] = $path;
+            $trek->update($data);
+            $data = new TrekResource($trek);
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+                'message' => 'Trek updated successfully'
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Trek not found'
+            ], 404);
+        } catch (\Throwable $th) {
+            \Log::error('Trek update error: ' . $th->getMessage(), ['file' => $th->getFile(), 'line' => $th->getLine()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update trek'
+            ], 500);
         }
-        $trek->update($data);
-        $data = new TrekResource($trek);
-        return response()->json([
-            'success' => true,
-            'data' => $data,
-            'message' => 'Trek updated successfully'
-        ]);
     }
 
     #[OA\Delete(
@@ -248,14 +283,27 @@ class TrekController extends Controller
     )]
     public function destroy($id)
     {
-        $trek = Trek::findOrFail($id);
-        if ($trek->featured_image) {
-            Storage::disk('public')->delete($trek->featured_image);
+        try {
+            $trek = Trek::findOrFail($id);
+            if ($trek->featured_image) {
+                Storage::disk('public')->delete($trek->featured_image);
+            }
+            $trek->delete();
+            return response()->json([
+                'success' => true,
+                'message' => 'Trek deleted successfully'
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Trek not found'
+            ], 404);
+        } catch (\Throwable $th) {
+            \Log::error('Trek destroy error: ' . $th->getMessage(), ['file' => $th->getFile(), 'line' => $th->getLine()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete trek'
+            ], 500);
         }
-        $trek->delete();
-        return response()->json([
-            'success' => true,
-            'message' => 'Trek deleted successfully'
-        ]);
     }
 }
