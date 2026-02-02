@@ -19,6 +19,26 @@ module.exports = {
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       merge_logs: true,
       time: true
+    },
+    {
+      name: 'laravel-queue',
+      script: 'php',
+      args: 'artisan queue:work --tries=3 --timeout=90',
+      cwd: '/var/www/OrophileTrekApi',
+      interpreter: 'none',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '300M',
+      env: {
+        APP_ENV: 'production',
+        NODE_ENV: 'production'
+      },
+      error_file: './storage/logs/queue-error.log',
+      out_file: './storage/logs/queue-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      merge_logs: true,
+      time: true
     }
   ]
 };
