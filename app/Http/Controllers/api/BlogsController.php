@@ -169,21 +169,13 @@ class BlogsController extends Controller
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
 
-                // Store in temp directory first
-                $tempPath = $image->store('temp/blogs', 'public');
-
                 // Generate unique filename
                 $extension = $image->getClientOriginalExtension();
                 $filename = 'blog_' . time() . '_' . Str::random(10) . '.' . $extension;
 
-                // Move from temp to permanent location
-                $permanentPath = 'blogs/' . $filename;
-                Storage::disk('public')->move($tempPath, $permanentPath);
-
-
-
-                // Store the path in database
-                $data['image'] = $permanentPath;
+                // Store in storage/app/public/blogs (automatically creates directory)
+                $path = $image->storeAs('blogs', $filename, 'public');
+                $data['image'] = $path;
             }
 
             $blog = Blogs::create($data);
@@ -365,19 +357,13 @@ class BlogsController extends Controller
 
                 $image = $request->file('image');
 
-                // Store in temp directory first
-                $tempPath = $image->store('temp/blogs', 'public');
-
                 // Generate unique filename
                 $extension = $image->getClientOriginalExtension();
                 $filename = 'blog_' . time() . '_' . Str::random(10) . '.' . $extension;
 
-                // Move from temp to permanent location
-                $permanentPath = 'blogs/' . $filename;
-                Storage::disk('public')->move($tempPath, $permanentPath);
-
-                // Store the path in database
-                $data['image'] = $permanentPath;
+                // Store in storage/app/public/blogs (automatically creates directory)
+                $path = $image->storeAs('blogs', $filename, 'public');
+                $data['image'] = $path;
             }
 
             $blog->update($data);

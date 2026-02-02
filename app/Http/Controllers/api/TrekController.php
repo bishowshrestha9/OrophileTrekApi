@@ -118,8 +118,10 @@ class TrekController extends Controller
             if ($request->hasFile('featured_image')) {
                 $image = $request->file('featured_image');
                 $imageName = uniqid('trek_') . '.' . $image->getClientOriginalExtension();
-                $image->move(public_path('treks'), $imageName);
-                $data['featured_image'] = 'treks/' . $imageName;
+                
+                // Store in storage/app/public/treks (automatically creates directory)
+                $path = $image->storeAs('treks', $imageName, 'public');
+                $data['featured_image'] = $path;
             }
             $trek = Trek::create($data);
             $data = new TrekResource($trek);
@@ -211,19 +213,16 @@ class TrekController extends Controller
         $data = $request->validated();
         if ($request->hasFile('featured_image')) {
             // Delete old image if exists
-            if ($trek->featured_image) {
-                $oldImagePath = public_path($trek->featured_image);
-                if (file_exists($oldImagePath)) {
-                    @unlink($oldImagePath);
-                }
+            if ($trek->featured_image && Storage::disk('public')->exists($trek->featured_image)) {
+                Storage::disk('public')->delete($trek->featured_image);
             }
+            
             $image = $request->file('featured_image');
             $imageName = uniqid('trek_') . '.' . $image->getClientOriginalExtension();
-            if (!file_exists(public_path('treks'))) {
-                mkdir(public_path('treks'), 0777, true);
-            }
-            $image->move(public_path('treks'), $imageName);
-            $data['featured_image'] = 'treks/' . $imageName;
+            
+            // Store in storage/app/public/treks (automatically creates directory)
+            $path = $image->storeAs('treks', $imageName, 'public');
+            $data['featured_image'] = $path;
         }
         $trek->update($data);
         $data = new TrekResource($trek);
