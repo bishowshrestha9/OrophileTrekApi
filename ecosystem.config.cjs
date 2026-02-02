@@ -21,7 +21,7 @@ module.exports = {
       time: true
     },
     {
-      name: 'laravel-queue',
+      name: 'Orophile-queue-worker',
       script: 'php',
       args: 'artisan queue:work --tries=3 --timeout=90',
       cwd: '/var/www/OrophileTrekApi',
