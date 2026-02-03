@@ -37,6 +37,8 @@ return [
             'https://127.0.0.1:3000',
             'http://209.126.86.149:3002',
             'https://209.126.86.149:3002',
+            'http://161.97.167.73:3001',
+            'http://161.97.167.73:8000',
             'https://kirsten-vaulted-margarita.ngrok-free.dev'
         ],
 
