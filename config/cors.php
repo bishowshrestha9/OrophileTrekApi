@@ -25,6 +25,13 @@ return [
     'allowed_origins' => env('CORS_ALLOWED_ORIGINS')
         ? array_map('trim', explode(',', env('CORS_ALLOWED_ORIGINS')))
         : [
+            // Production domains
+            'https://orophiletrek.tours',
+            'https://www.orophiletrek.tours',
+            'http://orophiletrek.tours',
+            'http://www.orophiletrek.tours',
+
+            // Development and staging
             'http://localhost:8000',
             'http://127.0.0.1:8000',
             'http://localhost:3002',
