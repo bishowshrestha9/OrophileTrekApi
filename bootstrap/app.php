@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Trust proxies for HTTPS detection
         $middleware->trustProxies(at: '*');
 
+        // Add security headers to all requests
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleCheck::class,
         ]);
